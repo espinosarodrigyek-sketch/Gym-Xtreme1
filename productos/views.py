@@ -144,7 +144,7 @@ def crear_producto(request):
     if request.method == 'POST':
         nombre = request.POST['nombre']
         descripcion = request.POST['descripcion']
-        categoria = request.POST['categoria']
+        categoria_id = request.POST.get('categoria')
         precio_costo = request.POST.get('precio_costo', 0)
         precio_venta = request.POST['precio_venta']
         stock_actual = request.POST['stock_actual']
@@ -167,6 +167,13 @@ def crear_producto(request):
             messages.error(request, "El stock no puede ser negativo.")
             return render(request, 'productos/form_producto.html')
         
+        categoria = None
+        if categoria_id:
+            try:
+                categoria = Categoria.objects.get(id=categoria_id)
+            except (Categoria.DoesNotExist, ValueError):
+                pass
+        
         Producto.objects.create(
             nombre=nombre,
             descripcion=descripcion,
@@ -185,7 +192,7 @@ def crear_producto(request):
 
         return redirect('lista_productos')
 
-    return render(request, 'productos/form_producto.html')
+    return render(request, 'productos/form_producto.html', {'categorias': Categoria.objects.all()})
 
 
 @admin_required
@@ -195,7 +202,14 @@ def editar_producto(request, id):
     if request.method == 'POST':
         producto.nombre = request.POST['nombre']
         producto.descripcion = request.POST['descripcion']
-        producto.categoria = request.POST['categoria']
+        
+        categoria_id = request.POST.get('categoria')
+        if categoria_id:
+            try:
+                producto.categoria = Categoria.objects.get(id=categoria_id)
+            except (Categoria.DoesNotExist, ValueError):
+                pass
+        
         producto.stock_actual = request.POST['stock_actual']
         producto.precio_costo = request.POST.get('precio_costo', 0)
         producto.precio_venta = request.POST['precio_venta']

@@ -21,7 +21,12 @@
                 <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:15px;">
                     <div style="margin-bottom:18px;">
                         <label class="form-label">Categoria</label>
-                        <input type="text" name="categoria" class="form-input" value="{{ producto.categoria|default:'' }}">
+                        <select name="categoria" class="form-input">
+                            <option value="">Seleccione una categoría</option>
+                            {% for cat in categorias %}
+                            <option value="{{ cat.id }}" {% if producto.categoria_id == cat.id %}selected{% endif %}>{{ cat.nombre }}</option>
+                            {% endfor %}
+                        </select>
                     </div>
                     <div style="margin-bottom:18px;">
                         <label class="form-label">Precio Costo (COP)</label>

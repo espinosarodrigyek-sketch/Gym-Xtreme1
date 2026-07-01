@@ -1,0 +1,228 @@
+{% include 'partials/admin_base.html' %}
+
+<div class="main-content">
+<div style="max-width:800px;margin:0 auto;">
+    <div class="card-dark">
+        <div class="card-dark-header" style="text-align:center;">
+            <i class="fas fa-file-invoice-dollar" style="font-size:1.5rem;margin-bottom:5px;display:block;"></i>
+            {% if compra %}Editar Compra{% else %}Registrar Compra a Proveedor{% endif %}
+        </div>
+        <div class="card-dark-body">
+            <form method="POST">
+                {% csrf_token %}
+
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:15px;">
+                    <div style="margin-bottom:18px;">
+                        <label class="form-label">Proveedor</label>
+                        <select name="proveedor" id="selectProveedor" class="form-input" required>
+                            <option value="">Seleccione un proveedor</option>
+                            {% for prov in proveedores %}
+                            <option value="{{ prov.id_proveedor }}" {% if compra and compra.proveedor.id_proveedor == prov.id_proveedor %}selected{% endif %}>{{ prov.nombre }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div style="margin-bottom:18px;">
+                        <label class="form-label">Producto</label>
+                        <select name="producto" id="selectProducto" class="form-input" required disabled>
+                            <option value="">Seleccione un proveedor primero</option>
+                        </select>
+                        <div id="loadingProductos" style="display:none;color:#666;font-size:0.8rem;margin-top:5px;">
+                            <i class="fas fa-spinner fa-spin"></i> Cargando productos...
+                        </div>
+                    </div>
+                </div>
+
+                <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:15px;">
+                    <div style="margin-bottom:18px;">
+                        <label class="form-label">Unidades</label>
+                        <input type="number" name="cantidad" id="inputCantidad" class="form-input" min="1" value="{% if detalle %}{{ detalle.cantidad }}{% else %}1{% endif %}" required>
+                    </div>
+                    <div style="margin-bottom:18px;">
+                        <label class="form-label">Costo Unitario (Compra)</label>
+                        <input type="number" name="precio" id="inputCosto" class="form-input" step="100" min="0" value="{% if detalle %}{{ detalle.precio_unitario }}{% endif %}" placeholder="Precio de compra" required>
+                        <small style="color:#666;font-size:0.75rem;">Precio que pagas al proveedor</small>
+                    </div>
+                    <div style="margin-bottom:18px;">
+                        <label class="form-label">Precio de Venta</label>
+                        <input type="number" name="precio_venta" id="inputVenta" class="form-input" step="100" min="0" placeholder="Precio para el cliente" required>
+                        <small style="color:#666;font-size:0.75rem;">Precio al que lo venderás</small>
+                    </div>
+                </div>
+
+                <!-- Resumen de ganancia -->
+                <div id="resumenGanancia" style="background:#0a0a0a;border:1px solid #333;border-radius:10px;padding:15px;margin-bottom:20px;display:none;">
+                    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:15px;text-align:center;">
+                        <div>
+                            <p style="color:#888;font-size:0.75rem;text-transform:uppercase;margin:0;">Total Compra</p>
+                            <p id="totalCompra" style="color:var(--rojo);font-size:1.3rem;font-weight:800;margin:5px 0 0;">$0</p>
+                        </div>
+                        <div>
+                            <p style="color:#888;font-size:0.75rem;text-transform:uppercase;margin:0;">Total Venta</p>
+                            <p id="totalVenta" style="color:#198754;font-size:1.3rem;font-weight:800;margin:5px 0 0;">$0</p>
+                        </div>
+                        <div>
+                            <p style="color:#888;font-size:0.75rem;text-transform:uppercase;margin:0;">Ganancia Bruta</p>
+                            <p id="gananciaBruta" style="color:#FFD700;font-size:1.3rem;font-weight:800;margin:5px 0 0;">$0</p>
+                        </div>
+                        <div>
+                            <p style="color:#888;font-size:0.75rem;text-transform:uppercase;margin:0;">Margen</p>
+                            <p id="margenPorc" style="color:#0d6efd;font-size:1.3rem;font-weight:800;margin:5px 0 0;">0%</p>
+                        </div>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-gym" style="width:100%;justify-content:center;padding:14px;font-size:1rem;">
+                    <i class="fas fa-save"></i> Registrar Compra
+                </button>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px;">
+                    <button type="button" id="btnLimpiar" class="btn-gym" style="background:#6c757d;justify-content:center;padding:12px;font-size:0.9rem;">
+                        <i class="fas fa-broom"></i> Limpiar
+                    </button>
+                    <a href="/compras/" style="display:block;text-align:center;color:#666;text-decoration:none;padding:12px;border:1px solid #333;border-radius:8px;">Cancelar</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+</div>
+
+<script>
+const selectProveedor = document.getElementById('selectProveedor');
+const selectProducto = document.getElementById('selectProducto');
+const loadingProductos = document.getElementById('loadingProductos');
+
+selectProveedor.addEventListener('change', async function() {
+    const proveedorId = this.value;
+    
+    selectProducto.innerHTML = '<option value="">Cargando productos...</option>';
+    selectProducto.disabled = true;
+    
+    if (!proveedorId) {
+        selectProducto.innerHTML = '<option value="">Seleccione un proveedor primero</option>';
+        selectProducto.disabled = true;
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/api/productos/proveedor/${proveedorId}/`);
+        const data = await response.json();
+        
+        selectProducto.innerHTML = '<option value="">Seleccione un producto</option>';
+        
+        if (data.success && data.productos && data.productos.length > 0) {
+            data.productos.forEach(function(prod) {
+                const option = document.createElement('option');
+                option.value = prod.id;
+                option.dataset.costo = prod.precio_costo;
+                option.dataset.venta = prod.precio_venta;
+                option.textContent = prod.nombre + ' (Stock: ' + prod.stock + ')';
+                selectProducto.appendChild(option);
+            });
+            selectProducto.disabled = false;
+        } else {
+            selectProducto.innerHTML = '<option value="">Este proveedor no tiene productos asociados</option>';
+        }
+    } catch (error) {
+        console.error('Error al cargar productos:', error);
+        selectProducto.innerHTML = '<option value="">Error al cargar productos</option>';
+    }
+});
+
+// If editing, trigger product load on page load
+{% if compra and detalle %}
+document.addEventListener('DOMContentLoaded', function() {
+    const currentProveedorId = {{ compra.proveedor.id_proveedor }};
+    if (currentProveedorId) {
+        selectProveedor.value = currentProveedorId;
+        fetch(`/api/productos/proveedor/${currentProveedorId}/`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success && data.productos) {
+                    data.productos.forEach(function(prod) {
+                        const option = document.createElement('option');
+                        option.value = prod.id;
+                        option.dataset.costo = prod.precio_costo;
+                        option.dataset.venta = prod.precio_venta;
+                        option.textContent = prod.nombre + ' (Stock: ' + prod.stock + ')';
+                        option.selected = prod.id === {{ detalle.producto.id_producto }};
+                        selectProducto.appendChild(option);
+                    });
+                    selectProducto.disabled = false;
+                }
+            });
+    }
+});
+{% endif %}
+
+document.addEventListener('DOMContentLoaded', function(){
+    const inputCosto = document.getElementById('inputCosto');
+    const inputVenta = document.getElementById('inputVenta');
+    const inputCant = document.getElementById('inputCantidad');
+    const resumen = document.getElementById('resumenGanancia');
+
+    // Auto-fill prices when product is selected
+    selectProducto.addEventListener('change', function(){
+        const opt = this.options[this.selectedIndex];
+        if(opt.dataset.costo && parseFloat(opt.dataset.costo) > 0){
+            inputCosto.value = opt.dataset.costo;
+        }
+        if(opt.dataset.venta && parseFloat(opt.dataset.venta) > 0){
+            inputVenta.value = opt.dataset.venta;
+        }
+        calcular();
+    });
+
+    function calcular(){
+        const cant = parseFloat(inputCant.value) || 0;
+        const costo = parseFloat(inputCosto.value) || 0;
+        const venta = parseFloat(inputVenta.value) || 0;
+
+        const totalCompra = cant * costo;
+        const totalVenta = cant * venta;
+        const ganancia = totalVenta - totalCompra;
+        const margen = costo > 0 ? ((venta - costo) / costo * 100) : 0;
+
+        document.getElementById('totalCompra').textContent = '$' + totalCompra.toLocaleString('es-CO');
+        document.getElementById('totalVenta').textContent = '$' + totalVenta.toLocaleString('es-CO');
+        document.getElementById('gananciaBruta').textContent = '$' + ganancia.toLocaleString('es-CO');
+        document.getElementById('margenPorc').textContent = margen.toFixed(1) + '%';
+
+        if(costo > 0 || venta > 0){
+            resumen.style.display = 'block';
+        }
+
+        // Color for ganancia
+        document.getElementById('gananciaBruta').style.color = ganancia >= 0 ? '#198754' : 'var(--rojo)';
+        document.getElementById('margenPorc').style.color = margen >= 0 ? '#0d6efd' : 'var(--rojo)';
+    }
+
+    inputCant.addEventListener('input', calcular);
+    inputCosto.addEventListener('input', calcular);
+    inputVenta.addEventListener('input', calcular);
+
+    // Initial calc
+    calcular();
+});
+
+// Botón Limpiar
+document.getElementById('btnLimpiar').addEventListener('click', function() {
+    // Limpiar selects
+    selectProveedor.value = '';
+    selectProducto.innerHTML = '<option value="">Seleccione un proveedor primero</option>';
+    selectProducto.disabled = true;
+    
+    // Limpiar inputs
+    document.getElementById('inputCantidad').value = '1';
+    document.getElementById('inputCosto').value = '';
+    document.getElementById('inputVenta').value = '';
+    
+    // Ocultar resumen
+    document.getElementById('resumenGanancia').style.display = 'none';
+    
+    // Resetear valores del resumen
+    document.getElementById('totalCompra').textContent = '$0';
+    document.getElementById('totalVenta').textContent = '$0';
+    document.getElementById('gananciaBruta').textContent = '$0';
+    document.getElementById('margenPorc').textContent = '0%';
+});
+</script>

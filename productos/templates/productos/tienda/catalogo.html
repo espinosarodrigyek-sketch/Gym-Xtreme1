@@ -1,0 +1,193 @@
+{% extends "base.html" %}
+{% load formato_cop %}
+
+{% block content %}
+
+<style>
+    .mi-tienda {
+        padding-bottom: 40px;
+    }
+
+    .mi-tienda .page-title {
+        font-size: 2.2rem;
+        font-weight: 800;
+        color: #ffffff;
+        letter-spacing: 0.5px;
+        margin-bottom: 1.5rem;
+    }
+
+    .mi-tienda .filter-bar {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 10px;
+        margin-bottom: 2rem;
+    }
+
+    .mi-tienda .card {
+        border-radius: 18px;
+        border: 1px solid rgba(148, 163, 184, 0.25);
+        background: linear-gradient(135deg, #111827 0%, #1e293b 100%);
+        transition: 0.3s;
+        overflow: hidden;
+    }
+
+    .mi-tienda .card:hover {
+        transform: translateY(-6px);
+        border-color: #3b82f6;
+        box-shadow: 0 12px 30px rgba(59, 130, 246, 0.16);
+    }
+
+    .mi-tienda .card-img-top {
+        border-bottom: 1px solid rgba(148, 163, 184, 0.18);
+    }
+
+    .mi-tienda .card-body h5 {
+        color: #ffffff;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+    }
+
+    .mi-tienda .text-success {
+        color: #60a5fa !important;
+    }
+
+    .mi-tienda .stock-text {
+        color: #cbd5e1;
+        font-size: 0.95rem;
+    }
+
+    .mi-tienda .empty-state {
+        background: rgba(30, 41, 59, 0.72);
+        border: 1px solid rgba(148, 163, 184, 0.2);
+        border-radius: 16px;
+        padding: 24px;
+        color: #e2e8f0;
+        text-align: center;
+    }
+</style>
+
+<div class="container mt-5 mi-tienda">
+
+<h2 class="text-center page-title">Nuestros Productos</h2>
+
+<!-- MENSAJES -->
+{% if messages %}
+{% for message in messages %}
+<div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+    {{ message }}
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+</div>
+{% endfor %}
+{% endif %}
+
+<!-- FILTRO -->
+<div class="filter-bar mb-4">
+
+<a href="{% url 'catalogo' %}" class="btn btn-outline-primary btn-sm">
+Todos
+</a>
+
+{% for cat in categorias %}
+<a href="?categoria={{ cat.nombre }}"
+class="btn btn-outline-primary btn-sm">
+{{ cat.nombre }}
+</a>
+{% endfor %}
+
+</div>
+
+<div class="row">
+
+{% for producto in productos %}
+
+<div class="col-md-3 mb-4">
+<div class="card h-100{% if producto.stock_actual <= 0 %} opacity-50{% endif %}">
+
+{% if producto.imagen %}
+<img src="{{ producto.imagen.url }}"
+class="card-img-top"
+style="height:200px; object-fit:cover;">
+{% endif %}
+
+<div class="card-body text-center">
+
+<h5>{{ producto.nombre }}</h5>
+
+<p class="text-success fw-bold">
+{{ producto.precio_venta|cop }}
+</p>
+
+{% if producto.stock_actual > 0 %}
+<p class="stock-text">
+Stock: {{ producto.stock_actual }}
+</p>
+
+{% if user.is_authenticated %}
+<form action="{% url 'agregar_carrito' producto.id_producto %}" method="POST">
+{% csrf_token %}
+
+<div class="d-flex justify-content-center align-items-center mb-2">
+
+<button type="button" class="btn btn-outline-secondary btn-sm"
+onclick="restarCantidad(this)">-</button>
+
+<input type="number"
+name="cantidad"
+value="1"
+min="1"
+max="{{ producto.stock_actual }}"
+class="form-control text-center mx-2"
+style="width:60px">
+
+<button type="button" class="btn btn-outline-secondary btn-sm"
+onclick="sumarCantidad(this)">+</button>
+
+</div>
+
+<button type="submit" class="btn btn-primary w-100">
+Agregar al carrito
+</button>
+
+</form>
+{% else %}
+<a href="{% url 'login' %}" class="btn btn-outline-primary w-100">
+<i class="fas fa-sign-in-alt me-2"></i>Iniciar sesión para comprar
+</a>
+{% endif %}
+{% else %}
+<p class="text-warning fw-bold">
+<i class="fas fa-exclamation-triangle"></i> Sin stock
+</p>
+<button class="btn btn-secondary w-100" disabled>
+Agotado
+</button>
+{% endif %}
+
+</div>
+</div>
+</div>
+
+{% empty %}
+<div class="empty-state">No hay productos disponibles.</div>
+{% endfor %}
+
+</div>
+</div>
+
+<script>
+function sumarCantidad(btn){
+let input = btn.parentElement.querySelector("input")
+let max = parseInt(input.max)
+let valor = parseInt(input.value)
+if(valor < max){ input.value = valor + 1 }
+}
+
+function restarCantidad(btn){
+let input = btn.parentElement.querySelector("input")
+let valor = parseInt(input.value)
+if(valor > 1){ input.value = valor - 1 }
+}
+</script>
+
+{% endblock %}

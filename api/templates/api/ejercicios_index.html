@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ejercicios - Gym Xtreme</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root { --rojo: #DC3545; --rojo-dark: #A71D2A; --negro: #111111; --negro-light: #1a1a1a; }
+        * { box-sizing: border-box; }
+        body { background: var(--negro); color: #ffffff; font-family: 'Segoe UI', sans-serif; margin: 0; }
+        
+        .container { max-width: 1200px; padding: 30px 15px; }
+        
+        .header-box {
+            background: linear-gradient(135deg, var(--rojo), var(--rojo-dark));
+            border-radius: 20px;
+            padding: 40px 30px;
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(220, 53, 69, 0.3);
+        }
+        .header-box h1 { margin: 0; font-weight: 800; }
+        .header-box p { margin: 10px 0 0; opacity: 0.9; }
+
+        .search-box {
+            background: white;
+            border-radius: 50px;
+            padding: 8px;
+            display: flex;
+            max-width: 600px;
+            margin: 25px auto 0;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+        }
+        .search-box input {
+            border: none;
+            flex: 1;
+            padding: 15px 25px;
+            font-size: 1rem;
+            border-radius: 50px;
+            outline: none;
+        }
+        .search-box button {
+            background: var(--negro);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 50px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .search-box button:hover { background: var(--rojo); }
+
+        .section-card {
+            background: var(--negro-light);
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 20px;
+            border: 1px solid #222;
+        }
+        .section-title {
+            color: white;
+            font-size: 1.3rem;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .exercise-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        
+        .exercise-card {
+            background: var(--negro-light);
+            border-radius: 15px;
+            overflow: hidden;
+            transition: all 0.3s;
+            border: 1px solid #222;
+            cursor: pointer;
+            text-decoration: none;
+            display: block;
+        }
+        .exercise-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--rojo);
+            box-shadow: 0 5px 20px rgba(220, 53, 69, 0.2);
+        }
+
+        .exercise-img {
+            width: 100%;
+            height: 180px;
+            object-fit: cover;
+            background: #0a0a0a;
+        }
+
+        .exercise-body { padding: 20px; }
+        .exercise-name {
+            color: white;
+            font-weight: 600;
+            margin-bottom: 10px;
+            font-size: 1rem;
+        }
+        .exercise-category {
+            display: inline-block;
+            background: rgba(220, 53, 69, 0.2);
+            color: var(--rojo);
+            padding: 5px 12px;
+            border-radius: 15px;
+            font-size: 0.75rem;
+            margin-bottom: 10px;
+        }
+        .exercise-muscles {
+            color: #888;
+            font-size: 0.8rem;
+            margin-top: 10px;
+        }
+        .exercise-muscles i { margin-right: 5px; color: var(--rojo); }
+
+        .popular-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .tag {
+            background: rgba(220, 53, 69, 0.2);
+            color: var(--rojo);
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            border: none;
+            transition: all 0.2s;
+        }
+        .tag:hover { background: var(--rojo); color: white; }
+
+        .empty-state {
+            text-align: center;
+            padding: 50px 20px;
+            color: #888;
+        }
+        .empty-state i { font-size: 4rem; margin-bottom: 20px; display: block; opacity: 0.5; }
+        .empty-state h3 { color: white; }
+        .empty-state p { color: #aaa; }
+
+        .back-link {
+            color: var(--rojo);
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            margin-bottom: 20px;
+        }
+        .back-link:hover { color: white; }
+
+        .alert-error {
+            background: rgba(220, 53, 69, 0.2);
+            border: 1px solid var(--rojo);
+            color: var(--rojo);
+            padding: 15px 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        .no-image {
+            width: 100%;
+            height: 180px;
+            background: #0a0a0a;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #444;
+            font-size: 3rem;
+        }
+
+        .img-loading {
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .img-loaded {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header-box">
+            <h1><i class="fas fa-dumbbell me-3"></i>Ejercicios</h1>
+            <p>Explora nuestra biblioteca de ejercicios con información detallada</p>
+            
+            <form method="POST" action="{% url 'api:ejercicios_index' %}" class="search-box">
+                {% csrf_token %}
+                <input type="text" name="termino" placeholder="Buscar: press banca, sentadilla, flexiones..." value="{{ termino_busqueda|default:'' }}">
+                <button type="submit"><i class="fas fa-search"></i> Buscar</button>
+            </form>
+        </div>
+
+        <!-- Back to home -->
+        <a href="/home/" class="back-link">
+            <i class="fas fa-arrow-left"></i> Volver al inicio
+        </a>
+
+        <!-- Error message -->
+        {% if error %}
+        <div class="alert-error">
+            <i class="fas fa-exclamation-triangle me-2"></i>{{ error }}
+        </div>
+        {% endif %}
+
+        {% if hay_busqueda %}
+            <!-- Resultados de busqueda -->
+            {% if ejercicios %}
+            <div class="section-card">
+                <h3 class="section-title">
+                    <i class="fas fa-list"></i> Resultados para "{{ termino_busqueda }}"
+                    <span style="font-size: 0.9rem; font-weight: normal; color: #888;">({{ total_encontrados }} encontrados)</span>
+                </h3>
+
+                <div class="exercise-grid">
+                    {% for ejercicio in ejercicios %}
+                    <a href="{% url 'api:detalle_ejercicio' ejercicio.id %}" class="exercise-card">
+                        {% if ejercicio.images %}
+                        <img src="{{ ejercicio.images.0 }}" 
+                             alt="{{ ejercicio.nombre }}" 
+                             class="exercise-img img-loading"
+                             onerror="this.onerror=null; this.src='https://upload.wikimedia.org/wikipedia/commons/thumb/3/3e/Chest_press.jpg/640px-Chest_press.jpg'; this.classList.add('img-loaded');"
+                             onload="this.classList.add('img-loaded');">
+                        {% else %}
+                        <div class="no-image">
+                            <i class="fas fa-dumbbell"></i>
+                        </div>
+                        {% endif %}
+                        <div class="exercise-body">
+                            <span class="exercise-category">{{ ejercicio.categoria }}</span>
+                            <div class="exercise-name">{{ ejercicio.nombre }}</div>
+                            {% if ejercicio.equipment %}
+                            <small style="color: #666;"><i class="fas fa-tools me-1"></i>{{ ejercicio.equipment.0 }}</small>
+                            {% endif %}
+                            {% if ejercicio.muscles %}
+                            <div class="exercise-muscles">
+                                <i class="fas fa-heart"></i>
+                                {% for musculo in ejercicio.muscles|slice:":2" %}
+                                {{ musculo.nombre }}{% if not forloop.last %}, {% endif %}
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </a>
+                    {% endfor %}
+                </div>
+            </div>
+            {% else %}
+            <!-- Sin resultados -->
+            <div class="section-card">
+                <div class="empty-state">
+                    <i class="fas fa-search"></i>
+                    <h3>Sin resultados para "{{ termino_busqueda }}"</h3>
+                    <p>No se encontraron ejercicios con ese nombre. Intenta con otras palabras.</p>
+                    <div class="popular-tags mt-4">
+                        <button class="tag" onclick="buscar('press')">press</button>
+                        <button class="tag" onclick="buscar('sentadilla')">sentadilla</button>
+                        <button class="tag" onclick="buscar('flexiones')">flexiones</button>
+                        <button class="tag" onclick="buscar('curl')">curl</button>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        {% else %}
+            <!-- Vista inicial - categorias -->
+            {% if categorias %}
+            <div class="section-card">
+                <h3 class="section-title">
+                    <i class="fas fa-th-large"></i> Categorías
+                </h3>
+                <div class="popular-tags">
+                    {% for cat in categorias %}
+                    <a href="{% url 'api:ejercicios_categoria' cat.id %}" class="tag" style="text-decoration: none;">{{ cat.name }}</a>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            {% if ejercicios %}
+            <div class="section-card">
+                <h3 class="section-title">
+                    <i class="fas fa-fire"></i> Ejercicios Populares
+                </h3>
+                <div class="exercise-grid">
+                    {% for ejercicio in ejercicios %}
+                    <a href="{% url 'api:detalle_ejercicio' ejercicio.id %}" class="exercise-card">
+                        {% if ejercicio.images %}
+                        <img src="{{ ejercicio.images.0 }}" 
+                             alt="{{ ejercicio.nombre }}" 
+                             class="exercise-img img-loading"
+                             onerror="this.onerror=null; this.src='https://upload.wikimedia.org/wikipedia/commons/thumb/3/3e/Chest_press.jpg/640px-Chest_press.jpg'; this.classList.add('img-loaded');"
+                             onload="this.classList.add('img-loaded');">
+                        {% else %}
+                        <div class="no-image">
+                            <i class="fas fa-dumbbell"></i>
+                        </div>
+                        {% endif %}
+                        <div class="exercise-body">
+                            <span class="exercise-category">{{ ejercicio.categoria }}</span>
+                            <div class="exercise-name">{{ ejercicio.nombre }}</div>
+                            {% if ejercicio.equipment %}
+                            <small style="color: #666;"><i class="fas fa-tools me-1"></i>{{ ejercicio.equipment.0 }}</small>
+                            {% endif %}
+                        </div>
+                    </a>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <div class="section-card">
+                <h3 class="section-title">
+                    <i class="fas fa-star"></i> Búsquedas populares
+                </h3>
+                <div class="popular-tags">
+                    <button class="tag" onclick="buscar('press')">press</button>
+                    <button class="tag" onclick="buscar('sentadilla')">sentadilla</button>
+                    <button class="tag" onclick="buscar('curl')">curl</button>
+                    <button class="tag" onclick="buscar('flexiones')">flexiones</button>
+                    <button class="tag" onclick="buscar('elevacion')">elevación</button>
+                    <button class="tag" onclick="buscar('pesas')">pesas</button>
+                </div>
+            </div>
+
+            <div class="empty-state">
+                <i class="fas fa-dumbbell"></i>
+                <h3>Explora ejercicios</h3>
+                <p>Busca por nombre o explora las categorías</p>
+            </div>
+        {% endif %}
+    </div>
+
+    <script>
+    function buscar(termino) {
+        document.querySelector('input[name="termino"]').value = termino;
+        document.querySelector('form').submit();
+    }
+    </script>
+</body>
+</html>

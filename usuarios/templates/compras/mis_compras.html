@@ -1,0 +1,174 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load formato_cop %}
+
+{% block title %}Mis Compras - GYM{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1 class="mb-4 text-white">Mis Compras</h1>
+    
+    <!-- Frase motivacional -->
+    {% if frase_motivacional %}
+    <div class="card mb-4 border-0" style="background: linear-gradient(135deg, #DC3545, #A71D2A); border-radius: 15px;">
+        <div class="card-body text-center py-4">
+            <i class="fas fa-quote-left fa-2x mb-3 text-white-50"></i>
+            <h4 class="text-white fw-bold mb-3" style="font-style: italic;">
+                "{{ frase_motivacional.frase }}"
+            </h4>
+            <p class="text-white-50 mb-0">
+                <i class="fas fa-user me-1"></i> {{ frase_motivacional.autor }}
+            </p>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Resumen -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card border-0" style="background: linear-gradient(135deg, #198754, #157347); border-radius: 15px;">
+                <div class="card-body text-center py-4">
+                    <i class="fas fa-wallet fa-2x text-white-50 mb-2"></i>
+                    <h5 class="text-white-50 mb-1">Total Gastado</h5>
+                    <h2 class="text-white fw-bold">{{ total_gastado|cop }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card border-0" style="background: linear-gradient(135deg, #0d6efd, #0a58ca); border-radius: 15px;">
+                <div class="card-body text-center py-4">
+                    <i class="fas fa-id-card fa-2x text-white-50 mb-2"></i>
+                    <h5 class="text-white-50 mb-1">Planes Activos</h5>
+                    <h2 class="text-white fw-bold">{{ suscripciones.count }}</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Suscripciones Activas -->
+    <div class="card border-0 mb-4" style="background: rgba(0,0,0,0.3); border-radius: 15px;">
+        <div class="card-header border-0" style="background: linear-gradient(135deg, #DC3545, #A71D2A); border-radius: 15px 15px 0 0;">
+            <h5 class="mb-0 text-white"><i class="fas fa-star me-2"></i>Suscripciones Activas</h5>
+        </div>
+        <div class="card-body">
+            {% if suscripciones %}
+                <div class="row">
+                    {% for suscripcion in suscripciones %}
+                    <div class="col-md-6 mb-3">
+                        <div class="card bg-dark border-danger h-100">
+                            <div class="card-header bg-danger text-white">
+                                <strong>{{ suscripcion.plan.nombre }}</strong>
+                            </div>
+                            <div class="card-body">
+                                <p class="text-white mb-2"><i class="fas fa-calendar-alt me-2 text-danger"></i><strong>Inicio:</strong> {{ suscripcion.fecha_inicio|date:"d/m/Y" }}</p>
+                                <p class="text-white mb-2"><i class="fas fa-calendar-check me-2 text-danger"></i><strong>Fin:</strong> {{ suscripcion.fecha_fin|date:"d/m/Y" }}</p>
+                                <p class="text-white mb-2"><i class="fas fa-bullseye me-2 text-danger"></i><strong>Objetivo:</strong> 
+                                    {% if suscripcion.objetivo_rutina == 'bajar_peso' %}
+                                        Bajar de peso
+                                    {% elif suscripcion.objetivo_rutina == 'subir_masa' %}
+                                        Subir masa muscular
+                                    {% elif suscripcion.objetivo_rutina == 'definir' %}
+                                        Definir musculatura
+                                    {% elif suscripcion.objetivo_rutina == 'cardio' %}
+                                        Cardio y resistencia
+                                    {% else %}
+                                        Mantener peso
+                                    {% endif %}
+                                </p>
+                                <span class="badge bg-success"><i class="fas fa-check me-1"></i>Activo</span>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="text-center py-3">
+                    <i class="fas fa-info-circle fa-2x text-muted mb-2"></i>
+                    <p class="text-white-50 mb-2">No tienes suscripciones activas.</p>
+                    <a href="{% url 'ver_planes' %}" class="btn btn-danger btn-sm">Ver planes disponibles</a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Historial de Compras de Planes -->
+    <div class="card border-0 mb-4" style="background: rgba(0,0,0,0.3); border-radius: 15px;">
+        <div class="card-header border-0" style="background: linear-gradient(135deg, #0d6efd, #0a58ca); border-radius: 15px 15px 0 0;">
+            <h5 class="mb-0 text-white"><i class="fas fa-dumbbell me-2"></i>Compras de Planes</h5>
+        </div>
+        <div class="card-body p-0">
+            {% if ventas_planes %}
+                <div class="table-responsive">
+                    <table class="table table-dark table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>Fecha</th>
+                                <th>Plan</th>
+                                <th>Precio</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for venta in ventas_planes %}
+                            <tr>
+                                <td>{{ venta.fecha|date:"d/m/Y H:i" }}</td>
+                                <td>{{ venta.plan.nombre }}</td>
+                                <td class="text-success fw-bold">{{ venta.precio|cop }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="text-center py-4">
+                    <p class="text-white-50 mb-0">No has comprado ningún plan aún.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Historial de Compras de Productos -->
+    <div class="card border-0 mb-4" style="background: rgba(0,0,0,0.3); border-radius: 15px;">
+        <div class="card-header border-0" style="background: linear-gradient(135deg, #198754, #157347); border-radius: 15px 15px 0 0;">
+            <h5 class="mb-0 text-white"><i class="fas fa-shopping-bag me-2"></i>Compras de Productos</h5>
+        </div>
+        <div class="card-body p-0">
+            {% if ventas_productos %}
+                <div class="table-responsive">
+                    <table class="table table-dark table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>Fecha</th>
+                                <th>Productos</th>
+                                <th>Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in ventas_productos %}
+                            <tr>
+                                <td>{{ item.venta.fecha|date:"d/m/Y H:i" }}</td>
+                                <td>
+                                    {% for detalle in item.detalles %}
+                                        <span class="badge bg-secondary me-1">{{ detalle.producto.nombre }} x{{ detalle.cantidad }}</span>
+                                    {% endfor %}
+                                </td>
+                                <td class="text-success fw-bold">{{ item.venta.total|cop }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="text-center py-4">
+                    <p class="text-white-50 mb-0">No has comprado ningún producto aún.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="mt-4 pb-4">
+        <a href="{% url 'home' %}" class="btn btn-secondary me-2"><i class="fas fa-home me-1"></i>Volver al inicio</a>
+        <a href="{% url 'ver_planes' %}" class="btn btn-danger me-2"><i class="fas fa-dumbbell me-1"></i>Ver Planes</a>
+        <a href="{% url 'catalogo' %}" class="btn btn-success"><i class="fas fa-store me-1"></i>Ver Productos</a>
+    </div>
+</div>
+{% endblock %}

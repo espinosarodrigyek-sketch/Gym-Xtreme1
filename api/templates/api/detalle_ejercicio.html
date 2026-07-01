@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ ejercicio.nombre }} - Gym Xtreme</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root { --rojo: #DC3545; --rojo-dark: #A71D2A; --negro: #111111; --negro-light: #1a1a1a; }
+        * { box-sizing: border-box; }
+        body { background: var(--negro); color: #ffffff; font-family: 'Segoe UI', sans-serif; margin: 0; }
+        
+        .container { max-width: 900px; padding: 30px 15px; }
+        
+        .back-link {
+            color: var(--rojo);
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            margin-bottom: 20px;
+        }
+        .back-link:hover { color: white; }
+
+        .exercise-header {
+            background: var(--negro-light);
+            border-radius: 20px;
+            overflow: hidden;
+            margin-bottom: 25px;
+            border: 1px solid #222;
+        }
+
+        .exercise-img {
+            width: 100%;
+            height: 350px;
+            object-fit: cover;
+            background: #0a0a0a;
+        }
+
+        .exercise-info {
+            padding: 30px;
+        }
+
+        .exercise-title {
+            color: white;
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 15px;
+        }
+
+        .exercise-meta {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+
+        .badge-cat {
+            background: rgba(220, 53, 69, 0.2);
+            color: var(--rojo);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+        }
+        .badge-equip {
+            background: rgba(52, 152, 219, 0.2);
+            color: #3498db;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+        }
+
+        .section-card {
+            background: var(--negro-light);
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 20px;
+            border: 1px solid #222;
+        }
+        .section-title {
+            color: white;
+            font-size: 1.3rem;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .muscle-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .muscle-item {
+            background: rgba(220, 53, 69, 0.2);
+            color: var(--rojo);
+            padding: 10px 15px;
+            border-radius: 10px;
+            font-size: 0.9rem;
+        }
+        .muscle-item.secondary {
+            background: rgba(52, 152, 219, 0.2);
+            color: #3498db;
+        }
+
+        .description-content {
+            color: #ccc;
+            line-height: 1.8;
+        }
+        .description-content b { color: white; }
+
+        .no-image {
+            width: 100%;
+            height: 350px;
+            background: #0a0a0a;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #444;
+            font-size: 5rem;
+        }
+
+        .gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        .gallery-img {
+            width: 100%;
+            height: 150px;
+            object-fit: cover;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .gallery-img:hover { transform: scale(1.05); }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Back links -->
+        <a href="{% url 'api:ejercicios_index' %}" class="back-link">
+            <i class="fas fa-arrow-left"></i> Volver a ejercicios
+        </a>
+        <a href="/home/" class="back-link" style="margin-left: 15px;">
+            <i class="fas fa-home"></i> Inicio
+        </a>
+
+        <!-- Exercise Header -->
+        <div class="exercise-header">
+            {% if ejercicio.images %}
+            <img src="{{ ejercicio.images.0 }}" alt="{{ ejercicio.nombre }}" class="exercise-img">
+            {% else %}
+            <div class="no-image">
+                <i class="fas fa-dumbbell"></i>
+            </div>
+            {% endif %}
+            <div class="exercise-info">
+                <h1 class="exercise-title">{{ ejercicio.nombre }}</h1>
+                <div class="exercise-meta">
+                    {% if ejercicio.categoria %}
+                    <span class="badge-cat"><i class="fas fa-tag me-2"></i>{{ ejercicio.categoria }}</span>
+                    {% endif %}
+                    {% for eq in ejercicio.equipment %}
+                    <span class="badge-equip"><i class="fas fa-tools me-2"></i>{{ eq }}</span>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Músculos principales -->
+        {% if ejercicio.muscles %}
+        <div class="section-card">
+            <h3 class="section-title">
+                <i class="fas fa-heart"></i> Músculos Principales
+            </h3>
+            <div class="muscle-list">
+                {% for musculo in ejercicio.muscles %}
+                <span class="muscle-item">{{ musculo.nombre }}</span>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Músculos secundarios -->
+        {% if ejercicio.muscles_secondary %}
+        <div class="section-card">
+            <h3 class="section-title">
+                <i class="fas fa-heartbeat"></i> Músculos Secundarios
+            </h3>
+            <div class="muscle-list">
+                {% for musculo in ejercicio.muscles_secondary %}
+                <span class="muscle-item secondary">{{ musculo.nombre }}</span>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Descripción -->
+        {% if ejercicio.descripcion %}
+        <div class="section-card">
+            <h3 class="section-title">
+                <i class="fas fa-list"></i> Instrucciones
+            </h3>
+            <div class="description-content">
+                {{ ejercicio.descripcion|safe }}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Más imágenes -->
+        {% if ejercicio.images|length > 1 %}
+        <div class="section-card">
+            <h3 class="section-title">
+                <i class="fas fa-images"></i> Más Imágenes
+            </h3>
+            <div class="gallery-grid">
+                {% for img in ejercicio.images|slice:"1:" %}
+                <img src="{{ img }}" alt="{{ ejercicio.nombre }}" class="gallery-img">
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</body>
+</html>

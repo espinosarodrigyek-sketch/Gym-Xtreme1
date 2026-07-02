@@ -3,15 +3,20 @@ from django.db import models
 from django.http import JsonResponse, HttpResponse
 from django.contrib.auth.models import User
 from usuarios.models import Suscripcion, Perfil, HistorialPeso, MetaUsuario
+from usuarios.decorators import admin_required
 from ventas.models import Venta as VentaProducto
+from ventas.models import Venta, DetalleVenta
+from productos.models import Producto
+from maquinaria.models import Maquinaria
 from .forms import SuscripcionForm
 from planes.models import Plan
-from django.db.models import Sum
+from django.db.models import Sum, Count, Q, F, ExpressionWrapper, DecimalField
 from datetime import datetime, timedelta
 from django.utils import timezone
 from django.views.decorators.http import require_POST
 from django.template.loader import get_template
 from xhtml2pdf import pisa
+from django.contrib import messages
 import io
 import csv
 
@@ -358,3 +363,86 @@ def reporte_clientes_excel(request):
     response = HttpResponse(output.getvalue(), content_type='text/csv')
     response['Content-Disposition'] = 'attachment; filename="reporte_clientes.csv"'
     return response
+
+
+@admin_required
+def dashboard(request):
+    now = timezone.now()
+    today = now.date()
+    start_of_month = today.replace(day=1)
+    start_of_week = today - timedelta(days=today.weekday())
+
+    total_usuarios = User.objects.count()
+    clientes_activos = Perfil.objects.filter(rol='cliente', user__is_active=True).count()
+    clientes_inactivos = Perfil.objects.filter(rol='cliente', user__is_active=False).count()
+    ultimos_usuarios = User.objects.order_by('-date_joined')[:5].select_related('perfil')
+
+    total_ventas = Venta.objects.count()
+    total_suscripciones = Suscripcion.objects.count()
+
+    ingresos_mes = Venta.objects.filter(
+        fecha__year=now.year,
+        fecha__month=now.month,
+        estado='completada'
+    ).aggregate(total=Sum('total'))['total'] or 0
+
+    ingresos_semana = Venta.objects.filter(
+        fecha__date__gte=start_of_week,
+        estado='completada'
+    ).aggregate(total=Sum('total'))['total'] or 0
+
+    costos_mes = DetalleVenta.objects.filter(
+        venta__fecha__year=now.year,
+        venta__fecha__month=now.month,
+        venta__estado='completada'
+    ).aggregate(
+        total=Sum(
+            ExpressionWrapper(F('cantidad') * F('precio_unitario'), output_field=DecimalField())
+        )
+    )['total'] or 0
+
+    ganancia_mes = ingresos_mes - costos_mes
+    ultimas_ventas = Venta.objects.select_related('usuario').order_by('-fecha')[:5]
+
+    top_productos = DetalleVenta.objects.filter(
+        venta__fecha__gte=now - timedelta(days=30),
+        venta__estado='completada'
+    ).values('producto__nombre', 'producto__precio_venta').annotate(
+        vendidos=Sum('cantidad')
+    ).order_by('-vendidos')[:5]
+
+    total_productos = Producto.objects.count()
+    unidades_stock = Producto.objects.aggregate(total=Sum('stock_actual'))['total'] or 0
+    stock_bajo = Producto.objects.filter(stock_actual__lt=5).count()
+    stock_ok = Producto.objects.filter(stock_actual__gte=5).count()
+    productos_sin_stock = Producto.objects.filter(stock_actual__lte=0)[:10]
+
+    total_maquinas = Maquinaria.objects.count()
+    maquinas_activas = Maquinaria.objects.filter(estado='activo').count()
+    maquinas_reparacion = Maquinaria.objects.filter(estado='reparacion').count()
+    lista_maquinas = Maquinaria.objects.all().order_by('-id_maquina')[:10]
+
+    context = {
+        'total_usuarios': total_usuarios,
+        'clientes_activos': clientes_activos,
+        'clientes_inactivos': clientes_inactivos,
+        'ultimos_usuarios': ultimos_usuarios,
+        'total_ventas': total_ventas,
+        'total_suscripciones': total_suscripciones,
+        'ingresos_mes': ingresos_mes,
+        'ingresos_semana': ingresos_semana,
+        'ganancia_mes': ganancia_mes,
+        'ultimas_ventas': ultimas_ventas,
+        'top_productos': top_productos,
+        'total_productos': total_productos,
+        'unidades_stock': unidades_stock,
+        'stock_bajo': stock_bajo,
+        'stock_ok': stock_ok,
+        'productos_sin_stock': productos_sin_stock,
+        'total_maquinas': total_maquinas,
+        'maquinas_activas': maquinas_activas,
+        'maquinas_reparacion': maquinas_reparacion,
+        'lista_maquinas': lista_maquinas,
+    }
+
+    return render(request, 'clientes/dashboard.html', context)

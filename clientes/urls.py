@@ -14,5 +14,6 @@ urlpatterns = [
     path('clientes/limpiar-clientes/', views.limpiar_clientes, name='limpiar_clientes'),
     path('clientes/reporte/pdf/', views.reporte_clientes_pdf, name='reporte_clientes_pdf'),
     path('clientes/reporte/excel/', views.reporte_clientes_excel, name='reporte_clientes_excel'),
+    path('dashboard/', views.dashboard, name='dashboard'),
 
 ]

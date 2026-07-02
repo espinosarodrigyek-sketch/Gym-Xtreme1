@@ -392,24 +392,49 @@ def dashboard(request):
     ).aggregate(total=Sum('total'))['total'] or 0
 
     costos_mes = DetalleVenta.objects.filter(
-        venta__fecha__year=now.year,
-        venta__fecha__month=now.month,
-        venta__estado='completada'
-    ).aggregate(
-        total=Sum(
-            ExpressionWrapper(F('cantidad') * F('precio_unitario'), output_field=DecimalField())
+    venta__fecha__year=now.year,
+    venta__fecha__month=now.month,
+    venta__estado='completada'
+).aggregate(
+    total=Sum(
+        ExpressionWrapper(
+            F('cantidad') * F('producto__precio_costo'),
+            output_field=DecimalField(max_digits=12, decimal_places=2)
         )
-    )['total'] or 0
-
+    )
+)['total'] or 0
     ganancia_mes = ingresos_mes - costos_mes
-    ultimas_ventas = Venta.objects.select_related('usuario').order_by('-fecha')[:5]
 
-    top_productos = DetalleVenta.objects.filter(
-        venta__fecha__gte=now - timedelta(days=30),
-        venta__estado='completada'
-    ).values('producto__nombre', 'producto__precio_venta').annotate(
-        vendidos=Sum('cantidad')
-    ).order_by('-vendidos')[:5]
+    planes_activos = Suscripcion.objects.filter(activa=True).count()
+
+    planes_vencidos = Suscripcion.objects.filter(
+        activa=False
+    ).count()
+
+    ventas_hoy = Venta.objects.filter(
+        fecha__date=today,
+        estado='completada'
+    ).count()
+
+    productos_activos = Producto.objects.filter(
+        estado='activo'
+    ).count()
+
+    productos_inactivos = Producto.objects.filter(
+        estado='inactivo'
+    ).count()
+
+    maquinas_venta = Maquinaria.objects.filter(
+        estado='venta'
+    ).count()
+
+    maquinas_vendidas = Maquinaria.objects.filter(
+        estado='vendido'
+    ).count()
+
+    ultimas_ventas = Venta.objects.select_related(
+        'usuario'
+    ).order_by('-fecha')[:5]
 
     total_productos = Producto.objects.count()
     unidades_stock = Producto.objects.aggregate(total=Sum('stock_actual'))['total'] or 0
@@ -443,6 +468,13 @@ def dashboard(request):
         'maquinas_activas': maquinas_activas,
         'maquinas_reparacion': maquinas_reparacion,
         'lista_maquinas': lista_maquinas,
+        'planes_activos': planes_activos,
+        'planes_vencidos': planes_vencidos,
+        'ventas_hoy': ventas_hoy,
+        'productos_activos': productos_activos,
+        'productos_inactivos': productos_inactivos,
+        'maquinas_venta': maquinas_venta,
+        'maquinas_vendidas': maquinas_vendidas,
     }
 
     return render(request, 'clientes/dashboard.html', context)

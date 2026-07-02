@@ -1,0 +1,11 @@
+- [ ] Analizar dashboard.html actual
+- [ ] Refactorizar COMPLETAMENTE usuarios/templates/admin_panel/dashboard.html SOLO HTML/CSS/JS
+- [ ] Mantener exactamente variables de Django y contexto
+- [ ] Implementar acordeón premium (solo secciones: Ganancia, Inventario, Maquinaria, Stock Bajo, Próximos vencimientos, Top vendidos)
+- [ ] Asegurar que solo una sección permanezca abierta (acordeón exclusivo)
+- [ ] Mantener primeras 4 tarjetas visibles
+- [ ] Eliminar CSS repetido y organizar estilos
+- [ ] Ejecutar sanity check: buscar que no se eliminen {{ }}, {% for %}, {% if %}
+- [ ] Mostrar lista de líneas/archivos modificados
+- [ ] Proveer comandos para ejecutar el servidor Django y verificar inicio (si aplica)
+

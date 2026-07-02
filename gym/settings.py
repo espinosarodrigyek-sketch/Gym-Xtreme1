@@ -12,16 +12,30 @@ try:
 except ImportError:
     pass
 
-
-try:
-    from dotenv import load_dotenv
-    load_dotenv()
-except ImportError:
-    # python-dotenv no está instalado, usar valores por defecto
-    pass
-
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+# =========================
+# CLOUDINARY CONFIG
+# =========================
+CLOUDINARY_CLOUD_NAME = os.environ.get('CLOUDINARY_CLOUD_NAME', 'dnkl30lhy')
+CLOUDINARY_API_KEY = os.environ.get('CLOUDINARY_API_KEY', '967165255994354')
+CLOUDINARY_API_SECRET = os.environ.get('CLOUDINARY_API_SECRET', '_EKbQT5fRFObJ9RHFBkDOd1nog8')
+
+cloudinary.config(
+    cloud_name=CLOUDINARY_CLOUD_NAME,
+    api_key=CLOUDINARY_API_KEY,
+    api_secret=CLOUDINARY_API_SECRET,
+    secure=True
+)
+
+CLOUDINARY_STORAGE = {
+    'CLOUD_NAME': CLOUDINARY_CLOUD_NAME,
+    'API_KEY': CLOUDINARY_API_KEY,
+    'API_SECRET': CLOUDINARY_API_SECRET,
+}
+
+DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
 
 # Quick-start development settings - unsuitable for production
 SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-default-key-change-in-production')
@@ -29,12 +43,28 @@ SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-default-key-change-in
 # DEBUG mode - Asegúrate de que esté en True para desarrollo
 DEBUG = os.environ.get('DEBUG', 'True') == 'True'
 
+CSRF_COOKIE_SECURE = not DEBUG
+CSRF_COOKIE_HTTPONLY = False
+CSRF_TRUSTED_ORIGINS = ['https://gymxtreme.com', 'https://www.gymxtreme.com', 'http://127.0.0.1:8000', 'http://localhost:8000']
 
-
-ALLOWED_HOSTS = os.environ.get(
-    "ALLOWED_HOSTS",
-    "localhost,127.0.0.1,gym-xtreme1.onrender.com"
-).split(",")
+# Seguridad de contraseñas - Validadores
+AUTH_PASSWORD_VALIDATORS = [
+    {
+        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
+    },
+    {
+        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
+        'OPTIONS': {
+            'min_length': 8,
+        },
+    },
+    {
+        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
+    },
+    {
+        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
+    },
+]
 
 # Application definition
 INSTALLED_APPS = [
@@ -44,6 +74,11 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+
+    # Cloudinary
+    'cloudinary',
+    'cloudinary_storage',
+
     'usuarios',
     'planes',
     'clientes',
@@ -94,6 +129,7 @@ DATABASES = {
         default='sqlite:///db.sqlite3'
     )
 }
+
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
@@ -149,6 +185,10 @@ CACHES = {
 }
 
 # Logging Configuration
+# =============================================================================
+# LOGGING SAFE FOR RENDER / GUNICORN
+# =============================================================================
+
 LOG_LEVEL = os.environ.get('DJANGO_LOG_LEVEL', 'DEBUG' if DEBUG else 'INFO')
 
 LOGGING = {
@@ -162,11 +202,14 @@ LOGGING = {
     },
     'handlers': {
         'console': {
-            'level': LOG_LEVEL,
             'class': 'logging.StreamHandler',
             'stream': sys.stdout,
             'formatter': 'standard',
         },
+    },
+    'root': {
+        'handlers': ['console'],
+        'level': LOG_LEVEL,
     },
     'loggers': {
         'django': {
@@ -181,34 +224,4 @@ LOGGING = {
         },
     },
 }
-
-# Security Settings
-SECURE_BROWSER_XSS_FILTER = True
-SECURE_CONTENT_TYPE_NOSNIFF = True
-X_FRAME_OPTIONS = 'DENY'
-
-# Session Security
-SESSION_COOKIE_SECURE = os.environ.get('SESSION_COOKIE_SECURE', 'False') == 'True'
-CSRF_COOKIE_SECURE = os.environ.get('CSRF_COOKIE_SECURE', 'False') == 'True'
-SECURE_SSL_REDIRECT = os.environ.get('SECURE_SSL_REDIRECT', 'False') == 'True'
-SECURE_HSTS_SECONDS = int(os.environ.get('SECURE_HSTS_SECONDS', '0'))
-
-# Rate Limiting (usando cache)
-RATELIMIT_ENABLE = True
-RATELIMIT_USE_CACHE = 'default'
-
-# Configuración de Stock Bajo (alertas)
-STOCK_MINIMO_ALERTA = int(os.environ.get('STOCK_MINIMO_ALERTA', 10))
-STOCK_CRITICO_ALERTA = int(os.environ.get('STOCK_CRITICO_ALERTA', 3))
-
-# Configuración de Respaldo
-BACKUP_DIR = os.environ.get('BACKUP_DIR', str(BASE_DIR / 'backups'))
-
-# Default from email
-DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', EMAIL_HOST_USER)
-
-# Authentication Settings
-LOGIN_URL = '/login/'
-LOGIN_REDIRECT_URL = 'home'
-LOGOUT_REDIRECT_URL = 'home'
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'

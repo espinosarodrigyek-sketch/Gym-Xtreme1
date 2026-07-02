@@ -30,7 +30,11 @@
         margin-bottom:25px;
     }
 
-    .stat-card{
+    .stat-card,
+    .card-dark{
+        cursor:pointer;
+}
+        
         background:linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,.015));
         border:1px solid var(--border);
         border-radius:14px;
@@ -565,5 +569,32 @@ clientes_inactivos={{ clientes_inactivos }}
             }, 180);
         });
     })();
+    const usuarios = document.querySelector('.stat-card.usuarios');
+    if (usuarios) {
+        usuarios.addEventListener('click', function () {
+            window.location.href = '/panel/clientes/';
+        });
+    }
+
+    const clientes = document.querySelector('.stat-card.clientes');
+    if (clientes) {
+        clientes.addEventListener('click', function () {
+            window.location.href = '/panel/clientes/';
+        });
+    }
+
+    const ventas = document.querySelector('.stat-card.ventas');
+    if (ventas) {
+        ventas.addEventListener('click', function () {
+            window.location.href = '/ventas/';
+        });
+    }
+
+    const ingresos = document.querySelector('.stat-card.ingresos');
+    if (ingresos) {
+        ingresos.addEventListener('click', function () {
+            window.location.href = '/admin-panel/economia/';
+        });
+    }
 </script>
 

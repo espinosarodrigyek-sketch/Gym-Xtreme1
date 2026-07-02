@@ -112,7 +112,7 @@ class Venta(models.Model):
     )
 
     def __str__(self):
-        return f"Venta {self.usuario} - {self.plan}"
+      return f"{self.titulo} - {self.usuario.username if self.usuario else 'Global'}"
 
 
 
@@ -201,8 +201,7 @@ class MetaUsuario(models.Model):
         verbose_name_plural = 'Metas del Usuario'
 
     def __str__(self):
-        return f"{self.usuario.username} - {self.descripcion}"
-    
+       return f"{self.nombre} ({self.dia}) - {self.series}x{self.repeticiones}"
 
 
 class Notificacion(models.Model):
@@ -238,8 +237,8 @@ class Notificacion(models.Model):
         verbose_name_plural = 'Notificaciones'
     
     def __str__(self):
-        return f"{self.titulo} - {self.usuario.username if self.usuario else 'Global'}"
-    
+      return self.get_nombre_display()
+
     @classmethod
     def crear_notificacion(cls, titulo, mensaje, tipo='info', usuario=None, link=''):
         """Método de clase para crear notificaciones fácilmente"""
@@ -306,7 +305,6 @@ class Notificacion(models.Model):
 
 
 class Rutina(models.Model):
-    """Modelo para gestionar rutinas de entrenamiento"""
 
     NIVEL_CHOICES = [
         ('principiante', 'Principiante'),
@@ -314,7 +312,26 @@ class Rutina(models.Model):
         ('avanzado', 'Avanzado'),
     ]
 
-    nombre = models.CharField(max_length=100, unique=True)
+    TIPOS_RUTINA = [
+        ('bajar_peso', 'Bajar Peso'),
+        ('subir_masa', 'Subir Masa Muscular'),
+        ('definicion', 'Definición Muscular'),
+        ('cardio', 'Cardio'),
+        ('resistencia', 'Resistencia'),
+        ('funcional', 'Funcional'),
+        ('adulto_mayor', 'Adulto Mayor'),
+        ('rehabilitacion', 'Rehabilitación'),
+    ]
+
+
+
+
+    nombre = models.CharField(
+    max_length=30,
+    choices=TIPOS_RUTINA,
+    unique=True
+    )
+
     descripcion = models.TextField(blank=True, help_text="Descripción de la rutina")
     nivel = models.CharField(max_length=20, choices=NIVEL_CHOICES, default='principiante')
     duracion_dias = models.PositiveIntegerField(default=30, help_text="Duración en días")
@@ -375,7 +392,7 @@ class Ejercicio(models.Model):
         verbose_name_plural = 'Ejercicios'
 
     def __str__(self):
-        return f"{self.nombre} ({self.dia}) - {self.series}x{self.repeticiones}"
+            return self.get_nombre_display()
     
     def get_imagen_url(self):
         """Retorna la URL de la imagen del ejercicio desde la API externa"""

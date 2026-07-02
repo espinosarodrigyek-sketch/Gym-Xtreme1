@@ -10,9 +10,11 @@ class RutinaForm(forms.ModelForm):
         fields = ['nombre', 'descripcion', 'nivel', 'duracion_dias', 'activa', 'imagen']
         widgets = {
             'nombre': forms.TextInput(attrs={
-                'class': 'form-input',
-                'placeholder': 'Nombre de la rutina'
-            }),
+            'class': 'form-input',
+            'placeholder': 'Ejercicio'
+}),
+             
+            
             'descripcion': forms.Textarea(attrs={
                 'class': 'form-input',
                 'rows': 3,
@@ -33,11 +35,7 @@ class RutinaForm(forms.ModelForm):
             }),
         }
     
-    def clean_nombre(self):
-        nombre = self.cleaned_data.get('nombre', '').strip()
-        if len(nombre) < 3:
-            raise forms.ValidationError("El nombre debe tener al menos 3 caracteres")
-        return nombre
+    
     
     def clean_duracion_dias(self):
         duracion = self.cleaned_data.get('duracion_dias')
@@ -91,10 +89,10 @@ class EjercicioInlineForm(forms.ModelForm):
         model = Ejercicio
         fields = ['nombre', 'descripcion', 'series', 'repeticiones', 'descanso', 'dia', 'orden']
         widgets = {
-            'nombre': forms.TextInput(attrs={
-                'class': 'form-input',
-                'placeholder': 'Ejercicio'
+            'nombre': forms.Select(attrs={
+             'class': 'form-input'
             }),
+        
             'descripcion': forms.TextInput(attrs={
                 'class': 'form-input',
                 'placeholder': 'Descripción'

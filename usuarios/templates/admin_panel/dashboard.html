@@ -596,5 +596,25 @@ clientes_inactivos={{ clientes_inactivos }}
             window.location.href = '/admin-panel/economia/';
         });
     }
+    const ganancia = document.querySelector('.grid-row-2 .card-dark:nth-child(1)');
+    if (ganancia) {
+        ganancia.addEventListener('click', function () {
+            window.location.href = '/admin-panel/economia/';
+        });
+    }
+
+    const inventario = document.querySelector('.grid-row-2 .card-dark:nth-child(2)');
+    if (inventario) {
+        inventario.addEventListener('click', function () {
+            window.location.href = '/productos/';
+        });
+    }
+
+    const maquinaria = document.querySelector('.grid-row-2 .card-dark:nth-child(3)');
+    if (maquinaria) {
+        maquinaria.addEventListener('click', function () {
+            window.location.href = '/maquinaria/';
+        });
+    }
 </script>
 

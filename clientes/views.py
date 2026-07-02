@@ -369,14 +369,51 @@ def reporte_clientes_excel(request):
 def dashboard(request):
     now = timezone.now()
     today = now.date()
-    start_of_month = today.replace(day=1)
     start_of_week = today - timedelta(days=today.weekday())
 
+    # ==========================
+    # USUARIOS
+    # ==========================
     total_usuarios = User.objects.count()
-    clientes_activos = Perfil.objects.filter(rol='cliente', user__is_active=True).count()
-    clientes_inactivos = Perfil.objects.filter(rol='cliente', user__is_active=False).count()
-    ultimos_usuarios = User.objects.order_by('-date_joined')[:5].select_related('perfil')
 
+    clientes_activos = Perfil.objects.filter(
+        rol='cliente',
+        user__is_active=True
+    ).count()
+
+    clientes_inactivos = Perfil.objects.filter(
+        rol='cliente',
+        user__is_active=False
+    ).count()
+
+    ultimos_usuarios = User.objects.select_related(
+        'perfil'
+    ).order_by('-date_joined')[:5]
+
+    # Listas para los paneles desplegables
+    lista_usuarios = User.objects.select_related(
+        'perfil'
+    ).order_by('-date_joined')[:20]
+
+    lista_clientes = Perfil.objects.filter(
+        rol='cliente'
+    ).select_related('user')[:20]
+
+    lista_productos = Producto.objects.select_related(
+        'categoria'
+    ).order_by('nombre')[:20]
+
+    lista_maquinaria = Maquinaria.objects.order_by(
+        'nombre'
+    )[:20]
+
+    lista_ventas = Venta.objects.select_related(
+        'usuario'
+    ).order_by('-fecha')[:20]
+
+    # ==========================
+    # VENTAS
+    # ==========================
     total_ventas = Venta.objects.count()
     total_suscripciones = Suscripcion.objects.count()
 
@@ -384,28 +421,35 @@ def dashboard(request):
         fecha__year=now.year,
         fecha__month=now.month,
         estado='completada'
-    ).aggregate(total=Sum('total'))['total'] or 0
+    ).aggregate(
+        total=Sum('total')
+    )['total'] or 0
 
     ingresos_semana = Venta.objects.filter(
         fecha__date__gte=start_of_week,
         estado='completada'
-    ).aggregate(total=Sum('total'))['total'] or 0
+    ).aggregate(
+        total=Sum('total')
+    )['total'] or 0
 
     costos_mes = DetalleVenta.objects.filter(
-    venta__fecha__year=now.year,
-    venta__fecha__month=now.month,
-    venta__estado='completada'
-).aggregate(
-    total=Sum(
-        ExpressionWrapper(
-            F('cantidad') * F('producto__precio_costo'),
-            output_field=DecimalField(max_digits=12, decimal_places=2)
+        venta__fecha__year=now.year,
+        venta__fecha__month=now.month,
+        venta__estado='completada'
+    ).aggregate(
+        total=Sum(
+            ExpressionWrapper(
+                F('cantidad') * F('producto__precio_costo'),
+                output_field=DecimalField(max_digits=12, decimal_places=2)
+            )
         )
-    )
-)['total'] or 0
+    )['total'] or 0
+
     ganancia_mes = ingresos_mes - costos_mes
 
-    planes_activos = Suscripcion.objects.filter(activa=True).count()
+    planes_activos = Suscripcion.objects.filter(
+        activa=True
+    ).count()
 
     planes_vencidos = Suscripcion.objects.filter(
         activa=False
@@ -416,12 +460,62 @@ def dashboard(request):
         estado='completada'
     ).count()
 
+    ultimas_ventas = Venta.objects.select_related(
+        'usuario'
+    ).order_by('-fecha')[:5]
+
+    # ==========================
+    # TOP PRODUCTOS
+    # ==========================
+    top_productos = DetalleVenta.objects.filter(
+        venta__fecha__gte=now - timedelta(days=30),
+        venta__estado='completada'
+    ).values(
+        'producto__nombre'
+    ).annotate(
+        vendidos=Sum('cantidad')
+    ).order_by('-vendidos')[:5]
+
+    # ==========================
+    # PRODUCTOS
+    # ==========================
+    total_productos = Producto.objects.count()
+
+    unidades_stock = Producto.objects.aggregate(
+        total=Sum('stock_actual')
+    )['total'] or 0
+
+    stock_bajo = Producto.objects.filter(
+        stock_actual__lt=5
+    ).count()
+
+    stock_ok = Producto.objects.filter(
+        stock_actual__gte=5
+    ).count()
+
+    productos_sin_stock = Producto.objects.filter(stock_actual__lte=0)[:10]
+    productos_bajo_stock = Producto.objects.filter(stock_actual__lte=5)[:10]
+    
+
     productos_activos = Producto.objects.filter(
         estado='activo'
     ).count()
 
     productos_inactivos = Producto.objects.filter(
         estado='inactivo'
+    ).count()
+
+    # ==========================
+    # MAQUINARIA
+    # ==========================
+    total_maquinas = Maquinaria.objects.count()
+
+    maquinas_activas = Maquinaria.objects.filter(
+        estado='activo'
+    ).count()
+
+    maquinas_reparacion = Maquinaria.objects.filter(
+        estado='reparacion'
     ).count()
 
     maquinas_venta = Maquinaria.objects.filter(
@@ -432,26 +526,19 @@ def dashboard(request):
         estado='vendido'
     ).count()
 
-    ultimas_ventas = Venta.objects.select_related(
-        'usuario'
-    ).order_by('-fecha')[:5]
+    lista_maquinas = Maquinaria.objects.order_by(
+        '-id_maquina'
+    )[:10]
 
-    total_productos = Producto.objects.count()
-    unidades_stock = Producto.objects.aggregate(total=Sum('stock_actual'))['total'] or 0
-    stock_bajo = Producto.objects.filter(stock_actual__lt=5).count()
-    stock_ok = Producto.objects.filter(stock_actual__gte=5).count()
-    productos_sin_stock = Producto.objects.filter(stock_actual__lte=0)[:10]
-
-    total_maquinas = Maquinaria.objects.count()
-    maquinas_activas = Maquinaria.objects.filter(estado='activo').count()
-    maquinas_reparacion = Maquinaria.objects.filter(estado='reparacion').count()
-    lista_maquinas = Maquinaria.objects.all().order_by('-id_maquina')[:10]
-
+    # ==========================
+    # CONTEXTO
+    # ==========================
     context = {
         'total_usuarios': total_usuarios,
         'clientes_activos': clientes_activos,
         'clientes_inactivos': clientes_inactivos,
         'ultimos_usuarios': ultimos_usuarios,
+
         'total_ventas': total_ventas,
         'total_suscripciones': total_suscripciones,
         'ingresos_mes': ingresos_mes,
@@ -459,15 +546,19 @@ def dashboard(request):
         'ganancia_mes': ganancia_mes,
         'ultimas_ventas': ultimas_ventas,
         'top_productos': top_productos,
+
         'total_productos': total_productos,
         'unidades_stock': unidades_stock,
         'stock_bajo': stock_bajo,
         'stock_ok': stock_ok,
         'productos_sin_stock': productos_sin_stock,
+        'productos_bajo_stock': productos_bajo_stock,
+
         'total_maquinas': total_maquinas,
         'maquinas_activas': maquinas_activas,
         'maquinas_reparacion': maquinas_reparacion,
         'lista_maquinas': lista_maquinas,
+
         'planes_activos': planes_activos,
         'planes_vencidos': planes_vencidos,
         'ventas_hoy': ventas_hoy,
@@ -475,6 +566,13 @@ def dashboard(request):
         'productos_inactivos': productos_inactivos,
         'maquinas_venta': maquinas_venta,
         'maquinas_vendidas': maquinas_vendidas,
+
+        # Paneles desplegables
+        'lista_usuarios': lista_usuarios,
+        'lista_clientes': lista_clientes,
+        'lista_productos': lista_productos,
+        'lista_maquinaria': lista_maquinaria,
+        'lista_ventas': lista_ventas,
     }
 
     return render(request, 'clientes/dashboard.html', context)

@@ -478,35 +478,35 @@ clientes_inactivos={{ clientes_inactivos }}
     </div>
 
     <!-- ACCIONES RÁPIDAS -->
-    <div class="card-dark" style="margin-top:18px;">
-        <div class="card-dark-header"><i class="fas fa-bolt" style="color:var(--rojo);"></i>Acciones Rápidas</div>
-        <div class="card-dark-body">
-            <div class="quick-grid">
-                <a href="/admin-panel/planes/crear/" class="quick-action">
-                    <i class="fas fa-plus-circle"></i>
-                    <span style="font-weight:600;">Nuevo Plan</span>
-                </a>
-                <a href="/panel/clientes/" class="quick-action">
-                    <i class="fas fa-users"></i>
-                    <span style="font-weight:600;">Ver Clientes</span>
-                </a>
-                <a href="/admin-panel/economia/" class="quick-action">
-                    <i class="fas fa-chart-pie"></i>
-                    <span style="font-weight:600;">Economía</span>
-                </a>
-                <a href="/productos/" class="quick-action">
-                    <i class="fas fa-box"></i>
-                    <span style="font-weight:600;">Inventario</span>
-                </a>
-                <a href="/proveedores/" class="quick-action">
-                    <i class="fas fa-truck"></i>
-                    <span style="font-weight:600;">Proveedores</span>
-                </a>
-                <a href="/maquinaria/" class="quick-action">
-                    <i class="fas fa-cogs"></i>
-                    <span style="font-weight:600;">Maquinaria</span>
-                </a>
+    <!-- USUARIOS -->
+<div class="acc-item" data-open="false">
+    <button class="acc-btn" type="button">
+        <span class="acc-left">
+            <i class="fas fa-users"></i>
+            Usuarios Registrados
+        </span>
+
+        <span class="acc-right">
+            <span class="acc-chevron">
+                <i class="fas fa-chevron-down"></i>
+            </span>
+        </span>
+    </button>
+
+    <div class="acc-content">
+        <div class="acc-inner">
+
+            {% for usuario in lista_usuarios %}
+            <div class="row-item">
+                <div>
+                    <strong>{{ usuario.username }}</strong>
+                    <div class="muted">{{ usuario.email }}</div>
+                </div>
             </div>
+            {% empty %}
+            <div>No hay usuarios.</div>
+            {% endfor %}
+
         </div>
     </div>
 </div>

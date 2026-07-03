@@ -28,12 +28,23 @@
                     
                     <div style="display:grid;grid-template-columns:1fr 1fr;gap:15px;margin-bottom:20px;">
                         <div>
-                            <label class="form-label">Nombre *</label>
-                            {{ form.nombre }}
-                            {% if form.nombre.errors %}
-                            <small style="color:var(--rojo);">{{ form.nombre.errors }}</small>
-                            {% endif %}
-                        </div>
+    <label class="form-label">Nombre *</label>
+
+    <select class="form-input" name="nombre" id="id_nombre">
+        <option value="bajar_peso">Bajar Peso</option>
+        <option value="subir_masa">Subir Masa Muscular</option>
+        <option value="definicion">Definición Muscular</option>
+        <option value="cardio">Cardio</option>
+        <option value="resistencia">Resistencia</option>
+        <option value="funcional">Funcional</option>
+        <option value="adulto_mayor">Adulto Mayor</option>
+        <option value="rehabilitacion">Rehabilitación</option>
+    </select>
+
+    {% if form.nombre.errors %}
+    <small style="color:var(--rojo);">{{ form.nombre.errors }}</small>
+    {% endif %}
+</div>
                         <div>
                             <label class="form-label">Nivel *</label>
                             {{ form.nivel }}

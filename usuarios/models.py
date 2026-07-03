@@ -305,6 +305,7 @@ class Notificacion(models.Model):
 
 
 class Rutina(models.Model):
+    """Modelo para gestionar rutinas de entrenamiento"""
 
     NIVEL_CHOICES = [
         ('principiante', 'Principiante'),
@@ -323,14 +324,75 @@ class Rutina(models.Model):
         ('rehabilitacion', 'Rehabilitación'),
     ]
 
-
-
-
     nombre = models.CharField(
-    max_length=30,
-    choices=TIPOS_RUTINA,
-    unique=True
+        max_length=30,
+        choices=TIPOS_RUTINA,
+        unique=True
     )
+
+    descripcion = models.TextField(
+        blank=True,
+        help_text="Descripción de la rutina"
+    )
+
+    nivel = models.CharField(
+        max_length=20,
+        choices=NIVEL_CHOICES,
+        default='principiante'
+    )
+
+    duracion_dias = models.PositiveIntegerField(
+        default=30,
+        help_text="Duración en días"
+    )
+
+    fecha_creacion = models.DateTimeField(auto_now_add=True)
+    fecha_actualizacion = models.DateTimeField(auto_now=True)
+
+    creada_por = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name='rutinas_creadas'
+    )
+
+    activa = models.BooleanField(
+        default=True,
+        help_text="Si está disponible para clientes"
+    )
+
+    es_predeterminada = models.BooleanField(
+        default=False,
+        help_text="Rutina del sistema (no editable por admin)"
+    )
+
+    imagen = models.ImageField(
+        upload_to='rutinas/',
+        blank=True,
+        null=True,
+        help_text="Imagen representativa"
+    )
+
+    class Meta:
+        db_table = 'rutinas'
+        ordering = ['-fecha_creacion']
+        verbose_name = 'Rutina'
+        verbose_name_plural = 'Rutinas'
+
+    def __str__(self):
+        return self.get_nombre_display()
+
+    def get_ejercicios_por_dia(self):
+        ejercicios = self.ejercicios.all().order_by('dia', 'orden')
+        dias = {}
+
+        for ejercicio in ejercicios:
+            if ejercicio.dia not in dias:
+                dias[ejercicio.dia] = []
+
+            dias[ejercicio.dia].append(ejercicio)
+
+        return dias
 
     descripcion = models.TextField(blank=True, help_text="Descripción de la rutina")
     nivel = models.CharField(max_length=20, choices=NIVEL_CHOICES, default='principiante')
